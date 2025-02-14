@@ -78,6 +78,17 @@ const pageBySlugQuery = (slug: string) =>
               cta: true,
             },
           },
+          "blocks.featured-article": {
+            populate: {
+              image: {
+                fields: ["url", "alternativeText"],
+              },
+              link: true,
+            },
+          },
+          "blocks.subscribe": {
+            populate: true,
+          },
         },
       },
     },
@@ -125,5 +136,20 @@ export async function getGlobalSettings() {
   const path = "/api/global";
   const url = new URL(path, BASE_URL);
   url.search = globalSettingQuery;
+  return fetchAPI(url.href, { method: "GET" });
+}
+
+export async function getContent(path: string) {
+  const url = new URL(path, BASE_URL);
+
+  url.search = qs.stringify({
+    sort: ["createdAt:desc"],
+    populate: {
+      image: {
+        fields: ["url", "alternativeText"],
+      },
+    },
+  });
+
   return fetchAPI(url.href, { method: "GET" });
 }

@@ -1,8 +1,8 @@
-import { getHomePage } from "@/data/loaders";
-import { notFound } from "next/navigation";
 import { BlockRenderer } from "@/components/BlockRenderer";
 import { ContentList } from "@/components/layout/ContentList";
 import { BlogCard } from "@/components/BlogCard";
+import { getHomePage } from "@/data/loaders";
+import { notFound } from "next/navigation";
 
 async function loader() {
   const data = await getHomePage();
@@ -10,18 +10,18 @@ async function loader() {
   return { ...data.data };
 }
 
-export default async function Home() {
+export default async function HomeRoute() {
   const data = await loader();
-  console.dir(data, { depth: null });
   const blocks = data?.blocks || [];
   return (
     <div>
       <BlockRenderer blocks={blocks} />
       <div className="container">
         <ContentList
-          headline="Check out our latest articles"
+          headline="Featured Articles"
           path="/api/articles"
           component={BlogCard}
+          featured
         />
       </div>
     </div>

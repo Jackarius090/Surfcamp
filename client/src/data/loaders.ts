@@ -3,8 +3,7 @@ import { fetchAPI } from "@/utils/fetch-api";
 import { getStrapiURL } from "@/utils/get-strapi-url";
 
 const BASE_URL = getStrapiURL();
-
-// qs takes the object notation and makes a URL that requests what we have asked for below in the nested objects.
+const BLOG_PAGE_SIZE = 2;
 const homePageQuery = qs.stringify({
   populate: {
     blocks: {
@@ -78,6 +77,7 @@ const pageBySlugQuery = (slug: string) =>
               cta: true,
             },
           },
+
           "blocks.featured-article": {
             populate: {
               image: {
@@ -139,15 +139,111 @@ export async function getGlobalSettings() {
   return fetchAPI(url.href, { method: "GET" });
 }
 
-export async function getContent(path: string) {
+export async function getContent(
+  path: string,
+  featured?: boolean,
+  query?: string,
+  page?: string
+) {
   const url = new URL(path, BASE_URL);
 
   url.search = qs.stringify({
     sort: ["createdAt:desc"],
+    filters: {
+      $or: [
+        { title: { $containsi: query } },
+        { description: { $containsi: query } },
+      ],
+      ...(featured && { featured: { $eq: featured } }),
+    },
+    pagination: {
+      pageSize: BLOG_PAGE_SIZE,
+      page: parseInt(page || "1"),
+    },
     populate: {
       image: {
         fields: ["url", "alternativeText"],
       },
+    },
+  });
+
+  return fetchAPI(url.href, { method: "GET" });
+}
+
+const blogPopulate = {
+  blocks: {
+    on: {
+      "blocks.hero-section": {
+        populate: {
+          image: {
+            fields: ["url", "alternativeText"],
+          },
+          logo: {
+            populate: {
+              image: {
+                fields: ["url", "alternativeText"],
+              },
+            },
+          },
+          cta: true,
+        },
+      },
+      "blocks.info-block": {
+        populate: {
+          image: {
+            fields: ["url", "alternativeText"],
+          },
+          cta: true,
+        },
+      },
+      "blocks.featured-article": {
+        populate: {
+          image: {
+            fields: ["url", "alternativeText"],
+          },
+          link: true,
+        },
+      },
+      "blocks.subscribe": {
+        populate: true,
+      },
+      "blocks.heading": {
+        populate: true,
+      },
+      "blocks.paragraph-with-image": {
+        populate: {
+          image: {
+            fields: ["url", "alternativeText"],
+          },
+        },
+      },
+      "blocks.paragraph": {
+        populate: true,
+      },
+      "blocks.full-image": {
+        populate: {
+          image: {
+            fields: ["url", "alternativeText"],
+          },
+        },
+      },
+    },
+  },
+};
+
+export async function getContentBySlug(slug: string, path: string) {
+  const url = new URL(path, BASE_URL);
+  url.search = qs.stringify({
+    filters: {
+      slug: {
+        $eq: slug,
+      },
+    },
+    populate: {
+      image: {
+        fields: ["url", "alternativeText"],
+      },
+      ...blogPopulate,
     },
   });
 

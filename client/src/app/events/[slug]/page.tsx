@@ -1,51 +1,48 @@
+import type { EventProps } from "@/types";
 import { ContentList } from "@/components/layout/ContentList";
 import { Card, type CardProps } from "@/components/Card";
-import { EventSignupForm } from "@/components/EventsSignupForm";
-
 import { getContentBySlug } from "@/data/loaders";
-import { EventProps } from "@/types";
 import { notFound } from "next/navigation";
+import { EventSignupForm } from "@/components/EventsSignupForm";
 
 async function loader(slug: string) {
   const { data } = await getContentBySlug(slug, "/api/events");
   const event = data[0];
-  console.log(event);
-  console.log(slug);
-
   if (!event) throw notFound();
   return { event: event as EventProps, blocks: event?.blocks };
 }
 
 interface ParamsProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ page?: string; query?: string }>;
 }
 
 const EventCard = (props: Readonly<CardProps>) => (
   <Card {...props} basePath="events" />
 );
 
-export default async function AllEventsRoute({
-  params,
-  searchParams,
-}: ParamsProps) {
-  //   const slug = (await params).slug;
-  const { query, page } = await searchParams;
-  const { event, blocks } = await loader("stay-in-touch");
+export default async function SingleEventRoute({ params }: ParamsProps) {
+  const slug = (await params).slug;
+  const { event, blocks } = await loader(slug);
 
   return (
     <div className="container">
       <div className="event-page">
-        <EventSignupForm blocks={blocks} eventId={event.documentId} />
+        <EventSignupForm
+          blocks={blocks}
+          eventId={event.documentId}
+          startDate={event.startDate}
+          price={event.price}
+          image={{
+            url: event?.image?.url,
+            alt: event?.image?.alternativeText || "Event image",
+          }}
+        />
       </div>
       <ContentList
-        headline="All Events"
+        headline="Featured Events"
         path="/api/events"
-        query={query}
-        page={page}
-        showSearch
-        showPagination
         component={EventCard}
+        featured={true}
       />
     </div>
   );
